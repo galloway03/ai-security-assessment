@@ -365,29 +365,67 @@ function ss(i) { answers[current] = i; render(); }
 function tm(i) {
   const q = Qs[current];
   if (!Array.isArray(answers[current])) answers[current] = [];
-  
-  // Automatically finds any option containing "none of the above" (case insensitive)
+
+  // 1. Identify special indices
   const noneIndex = q.opts.findIndex(o => 
-    o.t.toLowerCase().includes('none of the above') || 
-    o.t.toLowerCase().includes('none of these')
+    /none of (the above|these)/i.test(o.t.toLowerCase())
+  );
+  
+  const allIndex = q.opts.findIndex(o => 
+    /all of (the above|these)|select all/i.test(o.t.toLowerCase())
   );
 
-  if (noneIndex !== -1 && i === noneIndex) {
-    // Clicking "None" — clear everything and toggle None
+  const isNoneClicked = (i === noneIndex);
+  const isAllClicked = (i === allIndex);
+
+  // 2. Handle the "None of the Above" toggle
+  if (noneIndex !== -1 && isNoneClicked) {
+    // If clicking None: clear everything else and just toggle None
     answers[current] = answers[current].includes(noneIndex) ? [] : [noneIndex];
-  } else if (noneIndex !== -1) {
-    // Clicking anything else — remove None if selected
+  } 
+  
+  // 3. Handle the "Select All" toggle
+  else if (allIndex !== -1 && isAllClicked) {
+    // If clicking All: If already selected, clear all. 
+    // If not, select every index EXCEPT the "None" index.
+    if (answers[current].includes(allIndex)) {
+      answers[current] = [];
+    } else {
+      answers[current] = q.opts
+        .map((_, idx) => idx)
+        .filter(idx => idx !== noneIndex);
+    }
+  } 
+  
+  // 4. Handle standard multi-select options
+  else {
+    // First, always strip out "None" if a standard option is clicked
     answers[current] = answers[current].filter(x => x !== noneIndex);
+
     const x = answers[current].indexOf(i);
-    x > -1 ? answers[current].splice(x, 1) : answers[current].push(i);
-  } else {
-    // No "none" option — normal multi-select
-    const x = answers[current].indexOf(i);
-    x > -1 ? answers[current].splice(x, 1) : answers[current].push(i);
+    if (x > -1) {
+      // Unchecking an item
+      answers[current].splice(x, 1);
+      // If we uncheck a normal item, we must also uncheck "Select All"
+      if (allIndex !== -1) {
+        answers[current] = answers[current].filter(idx => idx !== allIndex);
+      }
+    } else {
+      // Checking a new item
+      answers[current].push(i);
+      
+      // OPTIONAL: Auto-check "Select All" if all normal options are now picked
+      const normalOptsCount = q.opts.filter((_, idx) => idx !== noneIndex && idx !== allIndex).length;
+      const selectedNormalCount = answers[current].filter(idx => idx !== noneIndex && idx !== allIndex).length;
+      
+      if (allIndex !== -1 && normalOptsCount === selectedNormalCount) {
+        if (!answers[current].includes(allIndex)) answers[current].push(allIndex);
+      }
+    }
   }
+
   render();
 }
-
 function goBack() { if (current > 0) { current--; render(); } }
 
 function goNext() {
