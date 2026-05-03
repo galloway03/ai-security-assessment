@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Risk Readiness Assessment — A&M Strategies</title>
+<style>
+  :root {
+    --purple: #4A2070;
+    --purple-dark: #1A0A2E;
+    --gold: #C9952A;
+    --gold-light: #E8B84B;
+    --bg: #f8f7fc;
+    --card: #ffffff;
+    --border: #e2ddef;
+    --text: #1A0A2E;
+    --muted: #6b6480;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+
+  .header {
+    background: var(--purple);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    color: #fff;
+  }
+  .header .eyebrow {
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .header h1 { font-size: 22px; font-weight: 600; margin-bottom: 8px; line-height: 1.3; }
+  .header p { font-size: 14px; color: rgba(255,255,255,.75); line-height: 1.6; }
+
+  .progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; }
+  .progress-track { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width .35s ease; }
+  .progress-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  .phase-tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--purple);
+    margin-bottom: 8px;
+  }
+
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(74,32,112,.06);
+  }
+  .question-text { font-size: 16px; font-weight: 600; line-height: 1.4; margin-bottom: 1.25rem; }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    background: #faf9fd;
+    transition: border-color .15s, background .15s;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .option:hover { border-color: var(--gold); background: #fff; }
+  .option.selected { border-color: var(--purple); background: #fff; }
+  .indicator {
+    width: 18px; height: 18px; flex-shrink: 0;
+    border: 2px solid #c9c0d8; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .option.selected .indicator { background: var(--purple); border-color: var(--purple); }
+  .indicator-check {
+    width: 18px; height: 18px; flex-shrink: 0;
+    border: 2px solid #c9c0d8; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #fff; transition: all .15s;
+  }
+  .option.selected .indicator-check { background: var(--purple); border-color: var(--purple); }
+
+  .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 1.25rem; }
+  .btn {
+    padding: 11px 26px; border-radius: 9px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: 1.5px solid var(--border); background: #fff;
+    color: var(--text); transition: all .15s;
+  }
+  .btn:hover { background: var(--bg); }
+  .btn-primary { background: var(--purple); color: #fff; border-color: var(--purple); }
+  .btn-primary:hover { background: var(--purple-dark); border-color: var(--purple-dark); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* Results */
+  .result-card { border-radius: 14px; padding: 1.75rem; margin-bottom: 1rem; }
+  .result-low { background: #EAF3DE; border: 1.5px solid #3B6D11; }
+  .result-moderate { background: #FAEEDA; border: 1.5px solid #854F0B; }
+  .result-high { background: #FCEBEB; border: 1.5px solid #A32D2D; }
+
+  .tier-label { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .result-low .tier-label { color: #27500A; }
+  .result-moderate .tier-label { color: #633806; }
+  .result-high .tier-label { color: #791F1F; }
+
+  .score-line { font-size: 13px; margin-bottom: 12px; }
+  .result-low .score-line { color: #3B6D11; }
+  .result-moderate .score-line { color: #854F0B; }
+  .result-high .score-line { color: #A32D2D; }
+
+  .score-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .score-track { flex: 1; height: 8px; background: rgba(0,0,0,.12); border-radius: 4px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+
+  .result-desc { font-size: 14px; line-height: 1.65; }
+  .result-low .result-desc { color: #27500A; }
+  .result-moderate .result-desc { color: #633806; }
+  .result-high .result-desc { color: #791F1F; }
+
+  .recs-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.5rem; margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(74,32,112,.06);
+  }
+  .recs-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+  .rec-item { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); flex-shrink: 0; margin-top: 6px; }
+  .rec-text { font-size: 14px; color: var(--muted); line-height: 1.55; }
+
+  .cta-block {
+    background: var(--purple); border-radius: 14px;
+    padding: 1.5rem 1.75rem; margin-bottom: 1rem;
+  }
+  .cta-block p { font-size: 14px; color: rgba(255,255,255,.8); margin-bottom: 14px; line-height: 1.6; }
+  .cta-btn {
+    display: inline-block; background: var(--gold); color: var(--purple-dark);
+    padding: 12px 24px; border-radius: 9px; font-size: 14px; font-weight: 700;
+    text-decoration: none; cursor: pointer; border: none; transition: background .15s;
+  }
+  .cta-btn:hover { background: var(--gold-light); }
+
+  .action-row { display: flex; gap: 10px; margin-top: .5rem; flex-wrap: wrap; }
+
+  .hidden { display: none; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .nav-row, .action-row, .progress-row { display: none !important; }
+    .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .result-card, .recs-card, .cta-block {
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .header h1 { font-size: 19px; }
+    .question-text { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="eyebrow">A&M Strategies</div>
+    <h1>AI Risk Readiness Assessment</h1>
+    <p>10 questions &middot; about 3 minutes &middot; get your personalized risk score and next steps</p>
+  </div>
+
+  <div id="quiz-section">
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <span class="progress-label" id="progress-label">Question 1 of 10</span>
+    </div>
+    <div id="question-area"></div>
+    <div class="nav-row">
+      <button class="btn" id="btn-back" onclick="goBack()" disabled>Back</button>
+      <button class="btn btn-primary" id="btn-next" onclick="goNext()">Next</button>
+    </div>
+  </div>
+
+  <div id="result-section" class="hidden"></div>
+</div>
+
+<script>
+const questions = [
+  {
+    phase: "Pause — where you are now",
+    q: "What AI tools are you currently using?",
+    type: "multi",
+    opts: [
+      {t:"ChatGPT, Claude, or Gemini",s:1},
+      {t:"Microsoft Copilot or Google Workspace AI",s:1},
+      {t:"AI features inside business tools (CRM, HR, email, etc.)",s:2},
+      {t:"Custom or integrated AI systems",s:2},
+      {t:"Not sure what I'm using",s:2}
+    ]
+  },
+  {
+    phase: "Pause — where you are now",
+    q: "What are you primarily using AI for?",
+    type: "multi",
+    opts: [
+      {t:"Personal tasks (writing, research, planning)",s:0},
+      {t:"Work tasks or business operations",s:1},
+      {t:"Customer-facing interactions",s:2},
+      {t:"Data analysis or decision-making",s:2},
+      {t:"Content creation for public channels",s:1}
+    ]
+  },
+  {
+    phase: "Inventory — what's exposed",
+    q: "Have you entered any of the following into an AI tool?",
+    type: "multi",
+    opts: [
+      {t:"Personal information (name, address, ID)",s:1},
+      {t:"Company or business data",s:2},
+      {t:"Customer or client information",s:2},
+      {t:"Financial information",s:2},
+      {t:"None of the above",s:0}
+    ]
+  },
+  {
+    phase: "Inventory — what's exposed",
+    q: "Do you know how your AI tools handle your data?",
+    type: "single",
+    opts: [
+      {t:"Yes — I've reviewed the privacy policy or terms of service",s:0},
+      {t:"Somewhat — I have a general idea",s:1},
+      {t:"No — I haven't looked into it",s:2}
+    ]
+  },
+  {
+    phase: "Inventory — what's exposed",
+    q: "Who has access to the AI tools you use?",
+    type: "single",
+    opts: [
+      {t:"Just me",s:0},
+      {t:"A small team or family members",s:1},
+      {t:"Customers or external partners",s:2},
+      {t:"Not sure",s:2}
+    ]
+  },
+  {
+    phase: "Vision — what good looks like",
+    q: "Do you have any rules or guidelines for how AI should be used?",
+    type: "single",
+    opts: [
+      {t:"Yes — a formal written policy or documented guidelines",s:0},
+      {t:"Informal rules or general team understanding",s:1},
+      {t:"None at all",s:2}
+    ]
+  },
+  {
+    phase: "Vision — what good looks like",
+    q: "How often do you verify AI-generated output before acting on it?",
+    type: "single",
+    opts: [
+      {t:"Always — before any real use",s:0},
+      {t:"Sometimes — for important things",s:1},
+      {t:"Rarely or never",s:2}
+    ]
+  },
+  {
+    phase: "Optimize — finding the gaps",
+    q: "Have you experienced any of the following from AI tools?",
+    type: "multi",
+    opts: [
+      {t:"Incorrect responses used in real decisions",s:2},
+      {t:"Biased or inappropriate output",s:2},
+      {t:"Unexpected data sharing or exposure",s:2},
+      {t:"None of these",s:0}
+    ]
+  },
+  {
+    phase: "Optimize — finding the gaps",
+    q: "Is AI connected to or integrated with other systems you use?",
+    type: "single",
+    opts: [
+      {t:"No — I use it as a standalone tool only",s:0},
+      {t:"Yes — it connects to email, calendar, or business tools",s:1},
+      {t:"Yes — it connects to customer data or financial systems",s:2},
+      {t:"Not sure",s:2}
+    ]
+  },
+  {
+    phase: "Transform — your path forward",
+    q: "Do you actively monitor or review how AI is being used in your work?",
+    type: "single",
+    opts: [
+      {t:"Yes — I review it regularly",s:0},
+      {t:"Limited — only occasionally",s:1},
+      {t:"No — not at all",s:2}
+    ]
+  }
+];
+
+let current = 0;
+let answers = new Array(questions.length).fill(null);
+
+function maxScore() {
+  return questions.reduce((sum, q) => sum + Math.max(...q.opts.map(o => o.s)), 0);
+}
+
+function render() {
+  const q = questions[current];
+  const saved = answers[current];
+  const isMulti = q.type === 'multi';
+
+  const optsHtml = q.opts.map((o, i) => {
+    const sel = isMulti ? (Array.isArray(saved) && saved.includes(i)) : saved === i;
+    const ctrl = isMulti
+      ? `<div class="indicator-check">${sel ? '&#10003;' : ''}</div>`
+      : `<div class="indicator">${sel ? '<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="white"/></svg>' : ''}</div>`;
+    return `<div class="option${sel ? ' selected' : ''}" onclick="${isMulti ? 'tm' : 'ss'}(${i})">${ctrl}<span>${o.t}</span></div>`;
+  }).join('');
+
+  document.getElementById('question-area').innerHTML = `
+    <div class="phase-tag">${q.phase}</div>
+    <div class="question-card">
+      <div class="question-text">${q.q}</div>
+      <div class="options">${optsHtml}</div>
+    </div>
+  `;
+
+  const pct = Math.round((current / questions.length) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `Question ${current + 1} of ${questions.length}`;
+  document.getElementById('btn-back').disabled = current === 0;
+  document.getElementById('btn-next').textContent = current === questions.length - 1 ? 'See my results' : 'Next';
+}
+
+function ss(i) { answers[current] = i; render(); }
+
+function tm(i) {
+  if (!Array.isArray(answers[current])) answers[current] = [];
+  const x = answers[current].indexOf(i);
+  x > -1 ? answers[current].splice(x, 1) : answers[current].push(i);
+  render();
+}
+
+function goBack() { if (current > 0) { current--; render(); } }
+
+function goNext() {
+  const a = answers[current];
+  if (a === null || (Array.isArray(a) && a.length === 0)) {
+    document.getElementById('question-area').querySelector('.question-card').style.border = '1.5px solid #E24B4A';
+    setTimeout(() => {
+      const card = document.getElementById('question-area').querySelector('.question-card');
+      if (card) card.style.border = '';
+    }, 800);
+    return;
+  }
+  if (current < questions.length - 1) { current++; render(); }
+  else showResults();
+}
+
+function calcScore() {
+  return questions.reduce((tot, q, qi) => {
+    const a = answers[qi];
+    if (q.type === 'single' && a !== null) return tot + q.opts[a].s;
+    if (q.type === 'multi' && Array.isArray(a)) return tot + a.reduce((s, i) => s + q.opts[i].s, 0);
+    return tot;
+  }, 0);
+}
+
+function showResults() {
+  const score = calcScore();
+  const mx = maxScore();
+  const pct = Math.round((score / mx) * 100);
+  const tier = pct <= 35 ? 'low' : pct <= 65 ? 'moderate' : 'high';
+
+  const cfg = {
+    low: {
+      lbl: '&#x1F7E2; Low Risk',
+      cls: 'result-low',
+      fill: '#639922',
+      desc: 'You have basic awareness, but limited monitoring. Your AI usage is relatively contained — but there are gaps worth addressing before they grow.',
+      cta: 'Get a deeper review of your AI usage',
+      link: '#contact'
+    },
+    moderate: {
+      lbl: '&#x1F7E1; Moderate Risk',
+      cls: 'result-moderate',
+      fill: '#BA7517',
+      desc: "You're actively using AI but lack full visibility and controls. Without clearer policies and monitoring, your exposure grows alongside your usage.",
+      cta: 'Schedule a 30-min AI Risk Review',
+      link: '#schedule'
+    },
+    high: {
+      lbl: '&#x1F534; High Risk',
+      cls: 'result-high',
+      fill: '#E24B4A',
+      desc: 'Your AI usage may be exposing sensitive data or creating operational risk. Immediate attention to governance and controls is recommended.',
+      cta: 'Request a full AI Security & Automation Assessment',
+      link: '#assessment'
+    }
+  };
+
+  const t = cfg[tier];
+
+  const recPool = [
+    { cond: () => answers[3] === 2, r: "Review the privacy settings and data policies for each AI tool you use — understand what they store and share." },
+    { cond: () => answers[5] === 2, r: "Create a simple one-page AI usage policy for yourself or your team. Clear boundaries prevent costly mistakes." },
+    { cond: () => answers[6] !== 0 && answers[6] !== null, r: "Build a habit of verifying AI outputs before acting on them — especially for decisions, communications, or anything public-facing." },
+    { cond: () => answers[8] !== null && answers[8] !== 0, r: "Audit which systems your AI tools connect to and limit access to sensitive or regulated data sources." },
+    { cond: () => answers[9] !== 0 && answers[9] !== null, r: "Schedule a monthly check-in to review how AI is being used in your environment and what data it's touching." },
+    { cond: () => Array.isArray(answers[2]) && answers[2].some(i => [0,1,2,3].includes(i)), r: "Establish clear rules about what data is and isn't acceptable to share with AI tools — especially for business and client information." },
+    { cond: () => Array.isArray(answers[7]) && answers[7].some(i => [0,1,2].includes(i)), r: "Document any AI-related incidents you've experienced and put a response process in place for future issues." }
+  ];
+
+  const recs = recPool.filter(x => x.cond()).map(x => x.r).slice(0, 5);
+  if (recs.length === 0) recs.push("Continue building on your strong foundation. Consider formalizing your current practices into documented policies.");
+
+  const recsHtml = recs.map(r => `<div class="rec-item"><div class="rec-dot"></div><span class="rec-text">${r}</span></div>`).join('');
+
+  document.getElementById('quiz-section').classList.add('hidden');
+  const rs = document.getElementById('result-section');
+  rs.classList.remove('hidden');
+  rs.innerHTML = `
+    <div class="result-card ${t.cls}">
+      <div class="tier-label">${t.lbl}</div>
+      <div class="score-line">Score: ${score} out of ${mx}</div>
+      <div class="score-bar-row">
+        <div class="score-track"><div class="score-fill" style="width:${pct}%;background:${t.fill}"></div></div>
+        <span style="font-size:12px;color:var(--muted)">${pct}%</span>
+      </div>
+      <div class="result-desc">${t.desc}</div>
+    </div>
+    <div class="recs-card">
+      <h3>Your personalized next steps</h3>
+      ${recsHtml}
+    </div>
+    <div class="cta-block">
+      <p>Ready to take action? A&M Strategies works with individuals and businesses to build the AI controls, policies, and visibility you need — without the complexity.</p>
+      <a class="cta-btn" href="${t.link}">${t.cta} &rarr;</a>
+    </div>
+    <div class="action-row">
+      <button class="btn" onclick="window.print()">Download / print results</button>
+      <button class="btn" onclick="restart()">Start over</button>
+    </div>
+  `;
+  window.scrollTo(0, 0);
+}
+
+function restart() {
+  current = 0;
+  answers = new Array(questions.length).fill(null);
+  document.getElementById('result-section').classList.add('hidden');
+  document.getElementById('quiz-section').classList.remove('hidden');
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
