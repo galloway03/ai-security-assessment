@@ -366,12 +366,16 @@ function tm(i) {
   const q = Qs[current];
   const noneIndex = q.opts.findIndex(o => o.t.toLowerCase().includes('none'));
   if (!Array.isArray(answers[current])) answers[current] = [];
-  
-  if (i === noneIndex) {
-    // If selecting None, clear everything else
+
+  if (noneIndex === -1) {
+    // No "none" option on this question — normal multi-select behavior
+    const x = answers[current].indexOf(i);
+    x > -1 ? answers[current].splice(x, 1) : answers[current].push(i);
+  } else if (i === noneIndex) {
+    // Clicking "None" — clear everything and select only None
     answers[current] = answers[current].includes(noneIndex) ? [] : [noneIndex];
   } else {
-    // If selecting anything else, remove None if selected
+    // Clicking anything else — remove None if it was selected
     answers[current] = answers[current].filter(x => x !== noneIndex);
     const x = answers[current].indexOf(i);
     x > -1 ? answers[current].splice(x, 1) : answers[current].push(i);
