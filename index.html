@@ -363,7 +363,7 @@ function render() {
 function ss(i) { answers[current] = i; render(); }
 
 function tm(i) {
-  const q = Qs[current];
+  const q = questions[current];
   if (!Array.isArray(answers[current])) answers[current] = [];
 
   // 1. Identify special indices
