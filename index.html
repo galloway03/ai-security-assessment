@@ -363,9 +363,19 @@ function render() {
 function ss(i) { answers[current] = i; render(); }
 
 function tm(i) {
+  const q = Qs[current];
+  const noneIndex = q.opts.findIndex(o => o.t.toLowerCase().includes('none'));
   if (!Array.isArray(answers[current])) answers[current] = [];
-  const x = answers[current].indexOf(i);
-  x > -1 ? answers[current].splice(x, 1) : answers[current].push(i);
+  
+  if (i === noneIndex) {
+    // If selecting None, clear everything else
+    answers[current] = answers[current].includes(noneIndex) ? [] : [noneIndex];
+  } else {
+    // If selecting anything else, remove None if selected
+    answers[current] = answers[current].filter(x => x !== noneIndex);
+    const x = answers[current].indexOf(i);
+    x > -1 ? answers[current].splice(x, 1) : answers[current].push(i);
+  }
   render();
 }
 
@@ -394,7 +404,7 @@ function calcScore() {
   }, 0);
 }
 
-function showResults() {
+function showResults(userEmail) {
   const score = calcScore();
   const mx = maxScore();
   const pct = Math.round((score / mx) * 100);
