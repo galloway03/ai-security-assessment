@@ -482,6 +482,22 @@ function submitEmail() {
     return;
   }
   errorEl.style.display = 'none';
+
+  // Send to Formspree
+  fetch('https://formspree.io/f/xnjwvnbv', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: email,
+      assessment_completed: new Date().toLocaleString(),
+      score: calcScore(),
+      max_score: maxScore(),
+      tier: (() => {
+        const pct = Math.round((calcScore() / maxScore()) * 100);
+        return pct <= 35 ? 'Low Risk' : pct <= 65 ? 'Moderate Risk' : 'High Risk';
+      })()
+    })
+  });
   showResults(email);
 }
 
