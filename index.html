@@ -445,8 +445,15 @@ function goNext() {
 function calcScore() {
   return questions.reduce((tot, q, qi) => {
     const a = answers[qi];
-    if (q.type === 'single' && a !== null) return tot + q.opts[a].s;
-    if (q.type === 'multi' && Array.isArray(a)) return tot + a.reduce((s, i) => s + q.opts[i].s, 0);
+    if (q.type === 'single' && a !== null) {
+      return tot + q.opts[a].s;
+    }
+    if (q.type === 'multi' && Array.isArray(a) && a.length > 0) {
+      // Cap multi-select contribution at the max single option score for that question
+      const raw = a.reduce((s, i) => s + q.opts[i].s, 0);
+      const cap = Math.max(...q.opts.map(o => o.s));
+      return tot + Math.min(raw, cap);
+    }
     return tot;
   }, 0);
 }
