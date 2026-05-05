@@ -439,9 +439,62 @@ function goNext() {
     return;
   }
   if (current < questions.length - 1) { current++; render(); }
-  else showResults();
+  else askEmail();
+}
+  
+function askEmail() {
+  if (!checkRateLimit()) {
+    document.getElementById('quiz-section').classList.add('hidden');
+    const rs = document.getElementById('result-section');
+    rs.classList.remove('hidden');
+    rs.innerHTML = `
+      <div class="question-card" style="padding:2rem;text-align:center">
+        <div class="question-text" style="color:#A32D2D">Too many submissions</div>
+        <p style="font-size:14px;color:var(--muted);margin-top:1rem;line-height:1.6">You've reached the maximum number of assessments for this session. Please try again in an hour or <a href="https://calendly.com/amstrategies/initial-consultation" target="_blank" style="color:var(--purple);font-weight:600">book a call directly</a>.</p>
+      </div>
+    `;
+    return;
+  }
+  document.getElementById('quiz-section').classList.add('hidden');
+  const rs = document.getElementById('result-section');
+  rs.classList.remove('hidden');
+  rs.innerHTML = `
+    <div class="question-card" style="padding:2rem">
+      <div class="phase-tag" style="margin-bottom:.75rem">Almost there</div>
+      <div class="question-text">Where should we send your results?</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:1.5rem;line-height:1.6">Enter your email to get a copy of your personalized next steps. Your information will never be shared or sold.</p>
+      <input type="email" id="email-input" placeholder="your@email.com" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;margin-bottom:.5rem;outline:none;" />
+      <p id="email-error" style="font-size:12px;color:#A32D2D;margin-bottom:1rem;display:none;">Please enter a valid email address.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:1rem">
+        <button class="btn btn-primary" onclick="submitEmail()">See My Results &rarr;</button>
+        <button class="btn" onclick="showResults('')">Skip</button>
+      </div>
+    </div>
+  `;
 }
 
+function submitEmail() {
+  const rawEmail = document.getElementById('email-input').value;
+  const email = rawEmail.replace(/<[^>]*>/g, '').trim();
+  const errorEl = document.getElementById('email-error');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errorEl.style.display = 'block';
+    return;
+  }
+  errorEl.style.display = 'none';
+  showResults(email);
+}
+
+function checkRateLimit() {
+  const now = Date.now();
+  let submissions = JSON.parse(sessionStorage.getItem('assessment_submissions') || '[]');
+  submissions = submissions.filter(t => now - t < 3600000);
+  if (submissions.length >= 3) return false;
+  submissions.push(now);
+  sessionStorage.setItem('assessment_submissions', JSON.stringify(submissions));
+  return true;
+}
+  
 function calcScore() {
   return questions.reduce((tot, q, qi) => {
     const a = answers[qi];
